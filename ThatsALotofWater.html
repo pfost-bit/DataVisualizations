@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>900 Million Gallons — Loudoun County</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f5f2ed;
+  --white:     #ffffff;
+  --blue:      #1a6fa6;
+  --blue-pale: #ddeef8;
+  --blue-mid:  #4db8f0;
+  --blue-dark: #0f4a72;
+  --ink:       #1a1a1a;
+  --ink-mid:   #454545;
+  --ink-light: #888;
+  --ink-faint: #bbb;
+  --rule:      #d8d4cc;
+  --red:       #c0392b;
+  --bar-w:     500px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+/* ── TITLE SECTION ───────────────────────────────────── */
+#title-section {
+  padding: 3rem 2rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+#title-section h1 {
+  font-family: 'Lora', Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 0.6rem;
+}
+
+#title-section h1 span { color: var(--blue); }
+
+#title-section p {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+}
+
+/* ── MAIN LAYOUT ──────────────────────────────────────── */
+#viz {
+  display: flex;
+  gap: 0;
+  max-width: 1100px;
+  margin: 0 auto 4rem;
+  border: 1px solid var(--rule);
+  background: var(--white);
+  position: relative;
+}
+
+/* ── LEFT: MINIMAP COLUMN ────────────────────────────── */
+#slider-col {
+  width: 130px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  /* Height = minimap (33vh) + readout strip (~70px) */
+  height: calc(33vh + 72px);
+  background: var(--white);
+  z-index: 10;
+  overflow: hidden;
+  align-self: flex-start;  /* don't stretch to bar height */
+}
+
+.s-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.45rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 0.6rem 0.7rem 0.2rem;
+  flex-shrink: 0;
+}
+
+#s-gal {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--blue);
+  line-height: 1.1;
+  padding: 0 0.7rem 0.1rem;
+  flex-shrink: 0;
+}
+
+#s-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.5rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  padding: 0 0.7rem 0.4rem;
+  flex-shrink: 0;
+}
+
+/* ── MINIMAP SVG ──────────────────────────────────────── */
+#minimap-wrap {
+  height: 33vh;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+#minimap-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* viewport indicator — shows current scroll position */
+#minimap-viewport {
+  position: absolute;
+  left: 0; right: 0;
+  background: rgba(26,111,166,0.1);
+  border-top: 1.5px solid var(--blue);
+  border-bottom: 1.5px solid var(--blue);
+  pointer-events: none;
+  transition: top 0.05s linear;
+}
+
+/* ── MIDDLE: WATER BAR ───────────────────────────────── */
+#bar-col {
+  width: var(--bar-w);
+  flex-shrink: 0;
+  border-right: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden; /* clip the SVG */
+}
+
+/* The SVG itself is the correct area: 260 × 3462px */
+#water-svg {
+  display: block;
+  width: 100%;
+  height: auto; /* natural height from SVG */
+}
+
+
+
+/* ── FOOTER ───────────────────────────────────────────── */
+footer {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  padding: 0 2rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+
+
+
+/* ── STICKY CALLOUT OVERLAY ───────────────────────────── */
+/* A single fixed panel inside the bar column that holds
+   the current callout text while you scroll through it.   */
+#sticky-callout {
+  position: fixed;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  padding: 0.9rem 1rem 1rem;
+  background: rgba(255,255,255,0.96);
+  border-top: 1.5px solid #454545;
+  /* left/width/top set by JS to align with bar-col */
+}
+#sticky-callout.visible { opacity: 1; }
+
+#sc-gal {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #aaa;
+  display: block;
+  margin-bottom: 5px;
+}
+#sc-head {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #454545;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+#sc-body {
+  font-size: 0.78rem;
+  color: #454545;
+  line-height: 1.6;
+  font-weight: 300;
+}
+#sc-body strong { font-weight: 500; color: #454545; }
+
+
+/* ── RIGHT: QUOTE PANEL ──────────────────────────────── */
+#quote-col {
+  width: clamp(160px, 22vw, 260px);
+  flex-shrink: 0;
+  border-left: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  height: calc(33vh + 72px);
+  background: var(--white);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1.2rem 1rem;
+  gap: 0.5rem;
+  align-self: flex-start;
+}
+
+#q-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.44rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+#q-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6rem;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+#q-wrap.visible { opacity: 1; }
+
+#q-text {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--ink-mid);
+  line-height: 1.65;
+}
+#q-text::before { content: '\201C'; color: var(--blue); }
+#q-text::after  { content: '\201D'; color: var(--blue); }
+
+#q-source {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ── TITLE ── -->
+
+<section id="title-section">
+  <h1>900,000,000 <span>gallons</span></h1>
+  <p>Loudoun County · data center water use · 2023 · scroll the bar · 1 pixel = 10 gallons</p>
+</section>
+
+<!-- ── VISUALIZATION ── -->
+<div id="viz">
+
+  <!-- MINIMAP -->
+  <div id="slider-col">
+    <div class="s-eyebrow">position</div>
+    <div id="s-gal">0 gal</div>
+    <div id="s-pct">0.00%</div>
+    <div id="minimap-wrap">
+      <svg id="minimap-svg" preserveAspectRatio="none"></svg>
+      <div id="minimap-viewport"></div>
+    </div>
+  </div>
+
+  <!-- WATER BAR (SVG injected by JS) -->
+  <div id="bar-col"></div>
+
+  <!-- QUOTES -->
+  <div id="quote-col">
+    <div id="q-eyebrow">voices</div>
+    <div id="q-wrap">
+      <div id="q-text"></div>
+      <div id="q-source"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>Sources: JLARC Dec 2024 · Sierra Club Virginia · EESI · Piedmont Environmental Council · Moms Clean Air Force</span>
+  <span>Bar area = 900M px² · 1 px = 1,000 gal · Loudoun County, VA</span>
+</footer>
+
+
+<div id="sticky-callout">
+  <span id="sc-gal"></span>
+  <div id="sc-head"></div>
+  <div id="sc-body"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════
+const TOTAL_GAL  = 900_000_000
+const GAL_PER_PX = 10                 // 1 pixel = 10 gallons
+const TOTAL_PX   = TOTAL_GAL / GAL_PER_PX  // 90,000,000 total pixels of area
+const BAR_W      = 500                // width of the bar in CSS px
+const BAR_H      = Math.round(TOTAL_PX / BAR_W)  // ≈ 346,154 px tall
+// Area = BAR_W × BAR_H = 260 × 3,462 = 900,120 ≈ 900,000 pixels ✓
+
+// ═══════════════════════════════════════════════════════
+// CALLOUTS — positioned by gallon value
+// ═══════════════════════════════════════════════════════
+const CALLOUTS = [
+  // ── These start where they're actually visible at this scale ──
+  // At 1px=10gal, BAR_H=180,000px: 1M gal = 200px, 10M gal = 2,000px
+  {
+    gal: 660_000,
+    short: "1 Olympic pool",
+    head: "One Olympic swimming pool — 660,000 gallons",
+    body: "A full Olympic pool. There are 1,363 more of these below."
+  },
+  {
+    gal: 1_500_000,
+    short: "1 DC / day",
+    head: "One large data center, one day",
+    body: "A single large facility consumes up to 5M gallons per day. This is a modest one. There are 200 in Loudoun."
+  },
+  {
+    gal: 4_000_000,
+    short: "Ashburn / week",
+    head: "Ashburn town water use, one week",
+    body: "All of Ashburn's residents and businesses, every faucet and pipe, for seven days."
+  },
+  {
+    gal: 10_000_000,
+    short: "10M gal",
+    head: "10 million gallons — 1.1% of the total",
+    body: "Fifteen Olympic pools. A mid-size city's weekly supply. Still barely visible on the bar ahead."
+  },
+  {
+    gal: 22_000_000,
+    short: "Norfolk / month",
+    head: "Norfolk's water use for a month",
+    body: "240,000 residents — all their taps, toilets, hospitals, fire hydrants — for 30 days."
+  },
+  {
+    gal: 40_000_000,
+    short: "Loudoun homes / yr",
+    head: "All Loudoun residential water, one year",
+    body: "Every household in Loudoun County — ~120,000 homes — all year. Data centers used <strong>22× this</strong>."
+  },
+  {
+    gal: 75_000_000,
+    short: "DC Mall / yr",
+    head: "Every fountain on the National Mall, one year",
+    body: "The reflecting pools, fountains, and monuments that 40 million tourists visit annually."
+  },
+  {
+    gal: 165_000_000,
+    short: "Norfolk / yr",
+    head: "Norfolk's entire annual water supply",
+    body: "Everything 240,000 Norfolk residents consume in a full year. Used here in <strong>67 days</strong>."
+  },
+  {
+    gal: 247_000_000,
+    short: "All Loudoun 2006",
+    head: "All of Loudoun County's water use, 2006",
+    body: "Residential, commercial, agricultural, everything county-wide. The remaining <strong>653M gallons</strong> didn't exist yet."
+  },
+  {
+    gal: 300_000_000,
+    short: "⅓",
+    head: "One third of the total",
+    body: "The Potomac River at Little Falls flows at ~5.2 billion gallons per day. This volume is just <strong>83 minutes</strong> of that flow."
+  },
+  {
+    gal: 450_000_000,
+    short: "Halfway",
+    head: "Halfway — 450 million gallons more below",
+    body: "Loudoun reached this level around <strong>2014</strong>. Since then it has doubled."
+  },
+  {
+    gal: 660_000_000,
+    short: "1,000 pools",
+    head: "1,000 Olympic swimming pools",
+    body: "One thousand pools filled and evaporated every year. Roughly where Loudoun stood in <strong>2016</strong>."
+  },
+  {
+    gal: 810_000_000,
+    short: "No law",
+    head: "Still no disclosure law",
+    body: "Virginia law <strong>did not clearly allow</strong> localities to require water use reports. These numbers are researcher estimates."
+  },
+  {
+    gal: 900_000_000,
+    short: "Peak 2023",
+    head: "900,000,000 gallons.",
+    body: "Every pixel. Up <strong>63% since 2019</strong>. Drawn from the Potomac. Evaporated into air."
+  }
+]
+
+// ═══════════════════════════════════════════════════════
+// SVG ILLUSTRATIONS
+// ═══════════════════════════════════════════════════════
+const ILLUS = {
+  house: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <polygon points="60,8 22,36 22,68 98,68 98,36" fill="#ddeef8" stroke="#1a6fa6" stroke-width="1.5"/>
+    <polygon points="60,4 16,38 104,38" fill="#e8f4fd" stroke="#1a6fa6" stroke-width="1.5"/>
+    <rect x="48" y="48" width="24" height="20" fill="#c5dff0" stroke="#1a6fa6" stroke-width="1"/>
+    <line x1="60" y1="48" x2="60" y2="68" stroke="#1a6fa6" stroke-width="1"/>
+    <text x="60" y="78" text-anchor="middle" font-family="monospace" font-size="7" fill="#888">~120K households</text>
+  </svg>`,
+  pools10: `<svg viewBox="0 0 120 80" width="120" height="80">
+    ${[0,1,2].map(i=>`<rect x="${10+i*2}" y="${54-i*18}" width="100" height="14" rx="2" fill="#ddeef8" stroke="#1a6fa6" stroke-width="1.2" opacity="${1-i*0.15}"/>
+    <rect x="${12+i*2}" y="${56-i*18}" width="96" height="10" rx="1" fill="#4db8f0" opacity="${0.3-i*0.05}"/>`).join('')}
+    <text x="60" y="76" text-anchor="middle" font-family="monospace" font-size="7" fill="#888">commercial sector</text>
+  </svg>`,
+  norfolk: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <circle cx="60" cy="37" r="22" fill="#ddeef8" stroke="#1a6fa6" stroke-width="1.5"/>
+    <circle cx="60" cy="37" r="18" fill="#4db8f0" opacity="0.35"/>
+    ${[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4,x=60+32*Math.cos(a),y=37+32*Math.sin(a);return`<rect x="${x-4}" y="${y-6}" width="8" height="12" rx="1" fill="#ddeef8" stroke="#1a6fa6" stroke-width="0.8"/>`}).join('')}
+    <text x="60" y="76" text-anchor="middle" font-family="monospace" font-size="7" fill="#888">240K residents / yr</text>
+  </svg>`,
+  year2006: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <rect x="10" y="8" width="100" height="58" rx="3" fill="#f8f6f2" stroke="#1a6fa6" stroke-width="1.5"/>
+    <rect x="10" y="8" width="100" height="14" rx="3" fill="#1a6fa6"/>
+    <text x="60" y="19" text-anchor="middle" font-family="monospace" font-size="7" fill="#fff">2006 — all Loudoun</text>
+    ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>`<rect x="${13+i*8}" y="27" width="6" height="6" rx="1" fill="${i<3?'#1a6fa6':'#ddeef8'}" stroke="#1a6fa6" stroke-width="0.8" opacity="${i<3?1:0.5}"/>`).join('')}
+    <text x="13" y="50" font-family="monospace" font-size="6" fill="#1a6fa6">▪▪▪ = DC water (2006)</text>
+    <text x="13" y="60" font-family="monospace" font-size="6" fill="#888">□ = rest of 2023 total</text>
+  </svg>`,
+  third: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <circle cx="60" cy="36" r="28" fill="#ddeef8" stroke="#1a6fa6" stroke-width="1.5"/>
+    <path d="M60,36 L60,8 A28,28 0 0,1 84.2,50 Z" fill="#1a6fa6" opacity="0.85"/>
+    <text x="52" y="42" font-family="monospace" font-size="10" fill="#1a6fa6" font-weight="bold">⅓</text>
+    <text x="60" y="74" text-anchor="middle" font-family="monospace" font-size="7" fill="#888">300M gal</text>
+  </svg>`,
+  half: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <rect x="10" y="12" width="100" height="52" rx="3" fill="#ddeef8" stroke="#1a6fa6" stroke-width="1.5"/>
+    <rect x="10" y="12" width="50" height="52" rx="3" fill="#1a6fa6" opacity="0.85"/>
+    <line x1="60" y1="12" x2="60" y2="64" stroke="#fff" stroke-width="2" opacity="0.7"/>
+    <text x="35" y="42" text-anchor="middle" font-family="monospace" font-size="8" fill="#fff">450M</text>
+    <text x="85" y="42" text-anchor="middle" font-family="monospace" font-size="8" fill="#1a6fa6">450M</text>
+    <text x="60" y="76" text-anchor="middle" font-family="monospace" font-size="7" fill="#888">halfway</text>
+  </svg>`,
+  pools1000: `<svg viewBox="0 0 120 80" width="120" height="80">
+    ${Array.from({length:160},(_,i)=>{const c=i%16,r=Math.floor(i/16);return`<rect x="${2+c*7}" y="${2+r*15}" width="6" height="11" rx="0.5" fill="#4db8f0" opacity="0.7" stroke="#1a6fa6" stroke-width="0.3"/>`}).join('')}
+    <text x="60" y="78" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#888">1,000 Olympic pools</text>
+  </svg>`,
+  niagara: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <rect x="4" y="8" width="112" height="50" rx="2" fill="#ddeef8"/>
+    ${[0,1,2,3,4,5,6].map(i=>`<rect x="4" y="${8+i*7}" width="112" height="6" fill="#4db8f0" opacity="${0.18+i*0.06}"/>`).join('')}
+    <rect x="4" y="8" width="112" height="50" rx="2" fill="none" stroke="#1a6fa6" stroke-width="1.5"/>
+    <text x="60" y="68" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#888">750K gal/sec × 1,000 sec</text>
+    <text x="60" y="77" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#888">≈ 17 min of Niagara Falls</text>
+  </svg>`,
+  nolaw: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <rect x="36" y="34" width="48" height="36" rx="4" fill="#fde8e8" stroke="#c0392b" stroke-width="1.5"/>
+    <path d="M48,34 L48,24 A12,12 0 0,1 72,24 L72,34" fill="none" stroke="#c0392b" stroke-width="1.5"/>
+    <circle cx="60" cy="51" r="7" fill="#c0392b" opacity="0.85"/>
+    <text x="60" y="55" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#fff" font-weight="500">?</text>
+    <text x="60" y="78" text-anchor="middle" font-family="monospace" font-size="6.5" fill="#c0392b">no disclosure required</text>
+  </svg>`,
+  full: `<svg viewBox="0 0 120 80" width="120" height="80">
+    <rect x="34" y="4" width="52" height="64" rx="3" fill="#1a6fa6"/>
+    <rect x="34" y="4" width="52" height="64" rx="3" fill="none" stroke="#1a6fa6" stroke-width="2"/>
+    ${[0,1,2,3,4,5].map(i=>`<line x1="34" y1="${13+i*10}" x2="86" y2="${13+i*10}" stroke="rgba(255,255,255,0.18)" stroke-width="0.8"/>`).join('')}
+    <text x="60" y="76" text-anchor="middle" font-family="monospace" font-size="7" fill="#1a6fa6" font-weight="bold">900,000,000 gal</text>
+  </svg>`
+}
+
+// ═══════════════════════════════════════════════════════
+// BUILD SVG BAR
+// The SVG is BAR_W × BAR_H px.
+// Area = 260 × 3462 = 899,120 ≈ 900,000 pixels
+// Each pixel in the SVG represents 1,000 gallons.
+// ═══════════════════════════════════════════════════════
+const svgNS = "http://www.w3.org/2000/svg"
+
+const svg = document.createElementNS(svgNS, "svg")
+svg.setAttribute("id", "water-svg")
+svg.setAttribute("width", BAR_W)
+svg.setAttribute("height", BAR_H)
+svg.setAttribute("viewBox", `0 0 ${BAR_W} ${BAR_H}`)
+
+// Ghost background
+const ghost = document.createElementNS(svgNS, "rect")
+ghost.setAttribute("x", 0); ghost.setAttribute("y", 0)
+ghost.setAttribute("width", BAR_W); ghost.setAttribute("height", BAR_H)
+ghost.setAttribute("fill", "#ddeef8")
+svg.appendChild(ghost)
+
+// Water fill (grows as slider moves)
+const waterFill = document.createElementNS(svgNS, "rect")
+waterFill.setAttribute("id", "water-fill-rect")
+waterFill.setAttribute("x", 0); waterFill.setAttribute("y", 0)
+waterFill.setAttribute("width", BAR_W); waterFill.setAttribute("height", 0)
+waterFill.setAttribute("fill", "#1a6fa6")
+svg.appendChild(waterFill)
+
+// Leading edge
+const edge = document.createElementNS(svgNS, "rect")
+edge.setAttribute("id", "water-edge-rect")
+edge.setAttribute("x", 0); edge.setAttribute("y", 0)
+edge.setAttribute("width", BAR_W); edge.setAttribute("height", 0)
+edge.setAttribute("fill", "#4db8f0")
+svg.appendChild(edge)
+
+// Callout rule lines — thin marks in the SVG at each threshold.
+// The text callouts themselves are HTML divs that stick to the
+// viewport as you scroll through them (see STICKY CALLOUTS below).
+const calloutGroup = document.createElementNS(svgNS, "g")
+calloutGroup.setAttribute("id", "callout-group")
+
+// How many bar-pixels between this and next callout?
+// If gap is small, embed text in SVG. If large, use sticky card.
+// Threshold: 2 × viewport height worth of bar pixels
+const SPARSE_THRESHOLD = Math.round(BAR_H * (window.innerHeight * 2 / BAR_H))
+
+CALLOUTS.forEach((c, i) => {
+  const y    = Math.round((c.gal / TOTAL_GAL) * BAR_H)
+  const next = CALLOUTS[i + 1]
+  const gap  = next
+    ? Math.round((next.gal / TOTAL_GAL) * BAR_H) - y
+    : BAR_H
+
+  // Only embed text if gap to next callout is large enough to fit it
+  // Head = 14px below line, body = 27px below line, need ~35px clearance
+  const MIN_EMBED_GAP = 40  // SVG pixels needed to show text without overlap
+  c._embedded = gap < window.innerHeight * 3 && gap >= MIN_EMBED_GAP
+
+  // Rule line
+  const rule = document.createElementNS(svgNS, "line")
+  rule.setAttribute("x1", 0); rule.setAttribute("x2", BAR_W)
+  rule.setAttribute("y1", y); rule.setAttribute("y2", y)
+  rule.setAttribute("stroke", "#454545")
+  rule.setAttribute("stroke-width", "0.8")
+  rule.setAttribute("opacity", "0.3")
+  calloutGroup.appendChild(rule)
+
+  // Gal label just above the line
+  const galLbl = document.createElementNS(svgNS, "text")
+  galLbl.setAttribute("x", 10)
+  galLbl.setAttribute("y", y - 4)
+  galLbl.setAttribute("font-family", "Space Mono, monospace")
+  galLbl.setAttribute("font-size", "7")
+  galLbl.setAttribute("fill", "#888")
+  galLbl.setAttribute("letter-spacing", "1")
+  galLbl.textContent = c.gal >= 1e6
+    ? (c.gal / 1e6).toFixed(c.gal >= 100e6 ? 0 : 1) + 'M gal'
+    : c.gal >= 1e3
+      ? (c.gal / 1e3).toFixed(c.gal >= 10e3 ? 0 : 1) + 'K gal'
+      : c.gal + ' gal'
+  calloutGroup.appendChild(galLbl)
+
+  // For dense callouts — embed head + truncated body directly in SVG
+  if (c._embedded) {
+    const head = document.createElementNS(svgNS, "text")
+    head.setAttribute("x", 10)
+    head.setAttribute("y", y + 14)
+    head.setAttribute("font-family", "DM Sans, sans-serif")
+    head.setAttribute("font-size", "11")
+    head.setAttribute("font-weight", "500")
+    head.setAttribute("fill", "#454545")
+    head.textContent = c.head
+    calloutGroup.appendChild(head)
+
+    if (gap >= 55) {
+      const bodyClean = c.body.replace(/<[^>]+>/g, '')
+      const maxChars  = Math.floor((BAR_W - 20) / 6.2)
+      const bodyShort = bodyClean.length > maxChars
+        ? bodyClean.slice(0, maxChars - 1) + '…'
+        : bodyClean
+      const body = document.createElementNS(svgNS, "text")
+      body.setAttribute("x", 10)
+      body.setAttribute("y", y + 27)
+      body.setAttribute("font-family", "DM Sans, sans-serif")
+      body.setAttribute("font-size", "10")
+      body.setAttribute("fill", "#454545")
+      body.setAttribute("opacity", "0.7")
+      body.textContent = bodyShort
+      calloutGroup.appendChild(body)
+    }
+  }
+
+})
+
+// ── SCALE DRAWINGS ─────────────────────────────────────────────────────────
+// Ordered smallest → largest. Actual pixel area: 1px² = 10 gallons.
+// Labels show amounts only. AREA_MARKS added to minimap as diamonds.
+const ns = svgNS
+const AREA_MARKS = []
+
+function areaRect(startGal, gal, color, label, sublabel) {
+  const h      = Math.max(2, Math.round(gal / GAL_PER_PX / BAR_W))
+  const startY = Math.round((startGal / TOTAL_GAL) * BAR_H) + 60
+  AREA_MARKS.push({ gal: startGal, label: sublabel || label })
+
+  const rect = document.createElementNS(ns, "rect")
+  rect.setAttribute("x", 0); rect.setAttribute("y", startY)
+  rect.setAttribute("width", BAR_W); rect.setAttribute("height", h)
+  rect.setAttribute("fill", color); rect.setAttribute("stroke", color)
+  rect.setAttribute("stroke-width", "0.8")
+  svg.appendChild(rect)
+
+  // Top label (white text on dark rect)
+  const t1 = document.createElementNS(ns, "text")
+  t1.setAttribute("x", 8); t1.setAttribute("y", startY + 14)
+  t1.setAttribute("font-family", "Space Mono, monospace")
+  t1.setAttribute("font-size", "9"); t1.setAttribute("fill", "#fff")
+  t1.textContent = label
+  svg.appendChild(t1)
+
+  // Amount line
+  const amtStr = gal >= 1e6
+    ? (gal/1e6).toFixed(gal>=100e6?0:1) + ' million gallons'
+    : (gal/1e3).toFixed(0) + ',000 gallons'
+  const t2 = document.createElementNS(ns, "text")
+  t2.setAttribute("x", 8); t2.setAttribute("y", startY + 26)
+  t2.setAttribute("font-family", "Space Mono, monospace")
+  t2.setAttribute("font-size", "8"); t2.setAttribute("fill", "#fff")
+  t2.setAttribute("opacity", "0.6")
+  t2.textContent = amtStr
+  svg.appendChild(t2)
+
+  // Bottom label inside rect (only if tall enough)
+  if (h > 80 && sublabel) {
+    const t3 = document.createElementNS(ns, "text")
+    t3.setAttribute("x", 8); t3.setAttribute("y", startY + h - 8)
+    t3.setAttribute("font-family", "Space Mono, monospace")
+    t3.setAttribute("font-size", "8"); t3.setAttribute("fill", "#fff")
+    t3.setAttribute("opacity", "0.5")
+    t3.textContent = sublabel
+    svg.appendChild(t3)
+  }
+}
+
+// ── 1. Single black pixel — 1px = 10 gallons ───────────────────────────────
+;(function() {
+  const px = document.createElementNS(ns, "rect")
+  px.setAttribute("x", 10); px.setAttribute("y", 40)
+  px.setAttribute("width", 1); px.setAttribute("height", 1)
+  px.setAttribute("fill", "#000")
+  svg.appendChild(px)
+  const line = document.createElementNS(ns, "line")
+  line.setAttribute("x1", 12); line.setAttribute("y1", 40)
+  line.setAttribute("x2", 60); line.setAttribute("y2", 40)
+  line.setAttribute("stroke", "#454545"); line.setAttribute("stroke-width", "0.5")
+  svg.appendChild(line)
+  const lbl = document.createElementNS(ns, "text")
+  lbl.setAttribute("x", 63); lbl.setAttribute("y", 43)
+  lbl.setAttribute("font-family", "Space Mono, monospace")
+  lbl.setAttribute("font-size", "7.5"); lbl.setAttribute("fill", "#454545")
+  lbl.textContent = "1 pixel = 10 gallons"
+  svg.appendChild(lbl)
+})()
+
+// ── Area charts: smallest → largest ─────────────────────────────────────────
+// Placed sequentially starting at ~480M gal (well into sparse zone)
+// Colors: distinct dark tones, darkening as scale increases
+
+// 1. 1 household: 50,000 gal → 10px tall
+areaRect(480_000_000,    50_000, "#1e5a82", "1 household, 1 year", "50,000 gallons")
+
+// 2. 1 Olympic pool: 660,000 gal → 132px tall
+areaRect(490_000_000,   660_000, "#14426b", "1 Olympic swimming pool", "660,000 gallons")
+
+// 3. 1 data center, 1 day: 5,000,000 gal → 1,000px tall
+areaRect(510_000_000, 5_000_000, "#0e2f54", "1 large data center, 1 day", "5,000,000 gallons")
+
+// 4. Ashburn town, 1 week: 28,000,000 gal → 5,600px tall
+areaRect(540_000_000,28_000_000, "#091e3a", "Ashburn town water, 1 week", "28,000,000 gallons")
+
+// 5. All Loudoun residential, 1 year: 40,000,000 gal → 8,000px tall
+areaRect(610_000_000,40_000_000, "#060f1f", "All Loudoun homes, 1 year", "40,000,000 gallons · data centers use 22× this")
+
+// 6. Norfolk annual supply: 165,000,000 gal → 33,000px tall
+areaRect(700_000_000,165_000_000,"#020508", "Norfolk's annual water supply", "165,000,000 gallons · 240,000 residents")
+
+svg.appendChild(calloutGroup)
+
+document.getElementById("bar-col").appendChild(svg)
+
+// ═══════════════════════════════════════════════════════
+// DOM REFS
+// ═══════════════════════════════════════════════════════
+const sGal        = document.getElementById("s-gal")
+const sPct        = document.getElementById("s-pct")
+const minimapSvg  = document.getElementById("minimap-svg")
+const minimapVP   = document.getElementById("minimap-viewport")
+const minimapWrap = document.getElementById("minimap-wrap")
+
+function fmtGal(g) {
+  if (g >= 1e9) return (g / 1e9).toFixed(2) + 'B gal'
+  if (g >= 1e6) return (g / 1e6).toFixed(1) + 'M gal'
+  return Math.round(g / 1e3).toLocaleString() + 'K gal'
+}
+
+// ═══════════════════════════════════════════════════════
+// MINIMAP — simple scaled-down version of the main bar
+// Height = 1/3 viewport. Same proportions, same callout
+// lines, click/drag to jump. No violin, no tricks.
+// ═══════════════════════════════════════════════════════
+const svgNS2 = "http://www.w3.org/2000/svg"
+
+// Minimap inner bar width (inset from panel edges)
+const MM_PAD  = 28   // px left padding for labels
+const MM_BW   = 52   // bar width inside minimap
+let   mmHeight = 0   // set in buildMinimap
+
+// References to dynamic minimap elements
+let mmFillRect = null
+let mmEdgeRect = null
+
+function buildMinimap() {
+  mmHeight = minimapWrap.clientHeight || Math.round(window.innerHeight / 3)
+  minimapWrap.style.height = mmHeight + "px"
+
+  const W = minimapWrap.clientWidth || 130
+  const H = mmHeight
+
+  minimapSvg.setAttribute("viewBox", `0 0 ${W} ${H}`)
+  minimapSvg.setAttribute("width",  W)
+  minimapSvg.setAttribute("height", H)
+  minimapSvg.innerHTML = ""
+
+  const ns = svgNS2
+  const bx = MM_PAD   // bar x-start
+
+  // ── Background ─────────────────────────────────────
+  const bg = document.createElementNS(ns, "rect")
+  bg.setAttribute("width", W); bg.setAttribute("height", H)
+  bg.setAttribute("fill", "#f8f6f3")
+  minimapSvg.appendChild(bg)
+
+  // ── Ghost bar (full height, pale blue) ─────────────
+  const barGhost = document.createElementNS(ns, "rect")
+  barGhost.setAttribute("x", bx); barGhost.setAttribute("y", 0)
+  barGhost.setAttribute("width", MM_BW); barGhost.setAttribute("height", H)
+  barGhost.setAttribute("fill", "#ddeef8")
+  minimapSvg.appendChild(barGhost)
+
+  // ── Water fill (grows with scroll) ─────────────────
+  mmFillRect = document.createElementNS(ns, "rect")
+  mmFillRect.setAttribute("x", bx); mmFillRect.setAttribute("y", 0)
+  mmFillRect.setAttribute("width", MM_BW); mmFillRect.setAttribute("height", 0)
+  mmFillRect.setAttribute("fill", "#1a6fa6")
+  minimapSvg.appendChild(mmFillRect)
+
+  // Leading edge shimmer
+  mmEdgeRect = document.createElementNS(ns, "rect")
+  mmEdgeRect.setAttribute("x", bx); mmEdgeRect.setAttribute("y", 0)
+  mmEdgeRect.setAttribute("width", MM_BW); mmEdgeRect.setAttribute("height", 0)
+  mmEdgeRect.setAttribute("fill", "#4db8f0")
+  minimapSvg.appendChild(mmEdgeRect)
+
+  // ── Callout tick marks ──────────────────────────────
+  CALLOUTS.forEach(c => {
+    const y = (c.gal / TOTAL_GAL) * H
+
+    // Tick across bar — no label
+    const tick = document.createElementNS(ns, "line")
+    tick.setAttribute("x1", bx - 3); tick.setAttribute("x2", bx + MM_BW + 3)
+    tick.setAttribute("y1", y);      tick.setAttribute("y2", y)
+    tick.setAttribute("stroke", "#1a1a1a")
+    tick.setAttribute("stroke-width", "0.8")
+    tick.setAttribute("opacity", "0.5")
+    minimapSvg.appendChild(tick)
+  })
+
+  // ── Bar border ──────────────────────────────────────
+  const border = document.createElementNS(ns, "rect")
+  border.setAttribute("x", bx); border.setAttribute("y", 0)
+  border.setAttribute("width", MM_BW); border.setAttribute("height", H)
+  border.setAttribute("fill", "none")
+  border.setAttribute("stroke", "#aac8e0")
+  border.setAttribute("stroke-width", "0.8")
+  minimapSvg.appendChild(border)
+
+  // ── Area chart marks — same line style as callouts ──
+  ;(AREA_MARKS || []).forEach(m => {
+    const my = (m.gal / TOTAL_GAL) * H
+    const line = document.createElementNS(ns, "line")
+    line.setAttribute("x1", bx - 3); line.setAttribute("x2", bx + MM_BW + 3)
+    line.setAttribute("y1", my);     line.setAttribute("y2", my)
+    line.setAttribute("stroke", "#0f4a72")
+    line.setAttribute("stroke-width", "1")
+    line.setAttribute("opacity", "0.7")
+    minimapSvg.appendChild(line)
+  })
+
+  updateMinimapFill(0)
+}
+
+function updateMinimapFill(scrollPct) {
+  if (!mmFillRect) return
+  const H     = mmHeight
+  const fillH = scrollPct * H
+  mmFillRect.setAttribute("height", fillH.toFixed(1))
+  mmEdgeRect.setAttribute("y",      Math.max(0, fillH - 1.5).toFixed(1))
+  mmEdgeRect.setAttribute("height", "1.5")
+}
+
+function updateMinimapViewport(scrollPct) {
+  const H = mmHeight
+  const barEl  = document.getElementById("bar-col")
+  // viewport fraction = window.innerHeight / BAR_H (both in px)
+  const vpFrac = window.innerHeight / BAR_H
+  const vpH    = Math.max(2, vpFrac * H)
+  const vpTop  = scrollPct * H
+
+  minimapVP.style.top    = vpTop.toFixed(1) + "px"
+  minimapVP.style.height = vpH.toFixed(1) + "px"
+}
+
+// ═══════════════════════════════════════════════════════
+// EASED SCROLL — click minimap to jump with ease-out
+// ═══════════════════════════════════════════════════════
+let easedScrollRAF = null
+
+function easedScrollTo(targetY) {
+  cancelAnimationFrame(easedScrollRAF)
+
+  const startY = window.scrollY
+  const dist   = targetY - startY
+  const FAST   = 600    // ms at full speed
+  const SLOW   = 1200   // ms approaching target
+  // Duration scales: quick snap away, slow deceleration near end
+  const duration = Math.min(SLOW, Math.max(FAST, Math.abs(dist) / 2))
+  const startT   = performance.now()
+
+  function step(now) {
+    const elapsed = now - startT
+    const t = Math.min(1, elapsed / duration)
+    // Ease-out cubic: fast start, slow end
+    const eased = 1 - Math.pow(1 - t, 3)
+    window.scrollTo(0, startY + dist * eased)
+    if (t < 1) easedScrollRAF = requestAnimationFrame(step)
+  }
+  easedScrollRAF = requestAnimationFrame(step)
+}
+
+minimapWrap.addEventListener("click", (e) => {
+  const rect = minimapWrap.getBoundingClientRect()
+  const clickPct = (e.clientY - rect.top) / rect.height
+  const barEl    = document.getElementById("bar-col")
+  const barTop   = barEl.getBoundingClientRect().top + window.scrollY
+  const targetY  = barTop + clickPct * BAR_H - window.innerHeight * 0.5
+  easedScrollTo(Math.max(0, targetY))
+})
+
+// Allow dragging on minimap too
+let mmDragging = false
+minimapWrap.addEventListener("mousedown", () => { mmDragging = true })
+document.addEventListener("mouseup",   () => { mmDragging = false })
+document.addEventListener("mousemove", (e) => {
+  if (!mmDragging) return
+  const rect     = minimapWrap.getBoundingClientRect()
+  const pct      = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
+  const barEl    = document.getElementById("bar-col")
+  const barTop   = barEl.getBoundingClientRect().top + window.scrollY
+  const targetY  = barTop + pct * BAR_H - window.innerHeight * 0.5
+  window.scrollTo(0, Math.max(0, targetY))
+})
+
+
+// ═══════════════════════════════════════════════════════
+// QUOTES — appear in the right panel, scroll-triggered
+// Each fires when barScrolled crosses its gal threshold
+// ═══════════════════════════════════════════════════════
+const QUOTES = [
+  {
+    gal: 5_000_000,
+    text: "They are everywhere, like really everywhere. There are many of them within two, three miles of my house.",
+    source: "Luz Drada, resident\nMoms Clean Air Force, 2024"
+  },
+  {
+    gal: 25_000_000,
+    text: "This has gotten so out of control that it's like we're in an alternate universe.",
+    source: "Julie Bolthouse\nPiedmont Environmental Council, 2024"
+  },
+  {
+    gal: 80_000_000,
+    text: "Water demand and power demand have a linear growth right now, because water is the cheapest way to cool.",
+    source: "Lauren Bridges\nUniversity of Virginia"
+  },
+  {
+    gal: 160_000_000,
+    text: "If there was one thing I'd like, it would be more transparency so people could make informed decisions about their health and safety.",
+    source: "Chris Tandy\nLoudoun Climate Project, 2024"
+  },
+  {
+    gal: 250_000_000,
+    text: "Potable water usage has increased 250% since 2021. In 2023 alone, they churned through 899 million gallons.",
+    source: "Moms Clean Air Force, 2024"
+  },
+  {
+    gal: 350_000_000,
+    text: "Virginia's datacenters guzzle water like there's no tomorrow.",
+    source: "Mike Wheatley\nSilicon Angle"
+  },
+  {
+    gal: 480_000_000,
+    text: "As we look towards climate change and drought, somebody has to start asking these questions about how that impacts water supply.",
+    source: "Kyle Hart\nNational Parks Conservation Association"
+  },
+  {
+    gal: 600_000_000,
+    text: "Data centers treat us, the people who live here, as no more than a pliable subdivision of their over-extended industrial park.",
+    source: "John P. Flannery II\nBlue Ridge Leader, 2025"
+  },
+  {
+    gal: 720_000_000,
+    text: "Residents contend with the constant noise of cooling systems, diesel generators, and ongoing construction.",
+    source: "A Holistic Review of Data Center\nImpacts in Loudoun County"
+  },
+  {
+    gal: 860_000_000,
+    text: "The county has not had a single day without data center construction in 14 years.",
+    source: "Loudoun County Economic\nDevelopment, 2024"
+  }
+]
+
+const qWrap   = document.getElementById('q-wrap')
+const qText   = document.getElementById('q-text')
+const qSource = document.getElementById('q-source')
+let   lastQuote = -1
+
+function updateQuote(barScrolled) {
+  let found = -1
+  for (let i = QUOTES.length - 1; i >= 0; i--) {
+    if (barScrolled >= (QUOTES[i].gal / TOTAL_GAL) * BAR_H) {
+      found = i; break
+    }
+  }
+  if (found !== lastQuote) {
+    lastQuote = found
+    if (found >= 0) {
+      qWrap.classList.remove('visible')
+      setTimeout(() => {
+        qText.textContent   = QUOTES[found].text
+        qSource.textContent = QUOTES[found].source
+        qWrap.classList.add('visible')
+      }, 200)
+    } else {
+      qWrap.classList.remove('visible')
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SCROLL HANDLER — updates everything from page scroll
+// ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// STICKY CALLOUT
+// Each callout has an entry pixel and an exit pixel.
+// STICK_PX = how many pixels of scroll the callout holds.
+// While inside the window the card is fixed to the viewport;
+// it drifts slowly upward then fades in the last 15%.
+// ═══════════════════════════════════════════════════════
+const STICK_PX   = Math.round(BAR_H * 0.015) // ~1.5% of bar height per callout
+const stickyEl   = document.getElementById('sticky-callout')
+const scGal      = document.getElementById('sc-gal')
+const scHead     = document.getElementById('sc-head')
+const scBody     = document.getElementById('sc-body')
+let   activeCall = -1
+
+function positionSticky() {
+  const barEl  = document.getElementById('bar-col')
+  const rect   = barEl.getBoundingClientRect()
+  stickyEl.style.left  = rect.left + 'px'
+  stickyEl.style.width = rect.width + 'px'
+}
+
+function updateFromScroll() {
+  const barEl   = document.getElementById("bar-col")
+  const barRect = barEl.getBoundingClientRect()
+  const barTop  = barRect.top + window.scrollY
+  const scrollY = window.scrollY
+  const viewH   = window.innerHeight
+
+  // How far into the bar are we (0–1)?
+  const rawPct = (scrollY - barTop) / BAR_H
+  const pct    = Math.max(0, Math.min(1, rawPct))
+  const gal    = pct * TOTAL_GAL
+
+  // Water fill
+  const fillH = Math.round(pct * BAR_H)
+  waterFill.setAttribute("height", fillH)
+  edge.setAttribute("y",      Math.max(0, fillH - 2))
+  edge.setAttribute("height", 2)
+
+  // Readouts
+  sGal.textContent = fmtGal(gal)
+  sPct.textContent = (pct * 100).toFixed(2) + '%'
+
+  // Minimap
+  updateMinimapFill(pct)
+  updateMinimapViewport(pct)
+
+  // ── Sticky callout — only for sparse callouts ───────
+  // Skip callouts that have text embedded in the SVG
+  const barScrolled = scrollY - barTop
+
+  // Quote panel
+  updateQuote(barScrolled)
+
+  let found = -1
+  for (let i = 0; i < CALLOUTS.length; i++) {
+    if (CALLOUTS[i]._embedded) continue
+    const entryPx = (CALLOUTS[i].gal / TOTAL_GAL) * BAR_H
+    const exitPx  = entryPx + STICK_PX
+    if (entryPx < 2) continue   // too close to top, skip
+    if (barScrolled >= entryPx && barScrolled < exitPx) {
+      found = i
+      break
+    }
+  }
+
+  if (found !== activeCall) {
+    activeCall = found
+    if (found >= 0) {
+      const c = CALLOUTS[found]
+      scGal.textContent = fmtGal(c.gal)
+      scHead.textContent = c.head
+      scBody.innerHTML   = c.body.replace(/<[^>]+>/g, s =>
+        s.includes('strong') ? s : '')
+      positionSticky()
+      stickyEl.classList.add('visible')
+    } else {
+      stickyEl.classList.remove('visible')
+    }
+  }
+
+  // While active, pin card vertically and fade near exit
+  if (found >= 0) {
+    const entryPx  = (CALLOUTS[found].gal / TOTAL_GAL) * BAR_H
+    const progress = (barScrolled - entryPx) / STICK_PX  // 0→1
+
+    // Card drifts from 55% → 40% down viewport over the stick window
+    const topPct = 0.55 - progress * 0.15
+    stickyEl.style.top = Math.round(viewH * topPct) + 'px'
+
+    // Fade out in last 15%
+    const opacity = progress > 0.85
+      ? Math.max(0, 1 - (progress - 0.85) / 0.15)
+      : 1
+    stickyEl.style.opacity = opacity.toFixed(3)
+  }
+}
+
+window.addEventListener("scroll", updateFromScroll, { passive: true })
+window.addEventListener("resize", () => { buildMinimap(); positionSticky(); updateFromScroll() })
+
+buildMinimap()
+updateFromScroll()
+
+</script>
+
+</body>
+</html>
