@@ -1097,13 +1097,14 @@ window.addEventListener("scroll", updateFromScroll, { passive: true })
 window.addEventListener("resize", () => { buildMinimap(); positionSticky(); updateFromScroll() })
 
 buildMinimap()
-updateFromScroll()
-
 // Show first quote immediately on load
 qText.textContent   = QUOTES[0].text
 qSource.textContent = QUOTES[0].source
 qWrap.classList.add('visible')
 lastQuote = 0
+updateFromScroll()
+
+
 
 </script>
 
