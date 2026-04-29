@@ -901,6 +901,8 @@ document.addEventListener("mousemove", (e) => {
 })
 
 
+
+
 // ═══════════════════════════════════════════════════════
 // QUOTES — appear in the right panel, scroll-triggered
 // Each fires when barScrolled crosses its gal threshold
@@ -1096,6 +1098,12 @@ window.addEventListener("resize", () => { buildMinimap(); positionSticky(); upda
 
 buildMinimap()
 updateFromScroll()
+
+// Show first quote immediately on load
+qText.textContent   = QUOTES[0].text
+qSource.textContent = QUOTES[0].source
+qWrap.classList.add('visible')
+lastQuote = 0
 
 </script>
 
