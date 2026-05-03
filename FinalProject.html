@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>900 Million Gallons — Loudoun County</title>
+<title>Whose Water Is It?</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ── RESET & BASE ─────────────────────────────────────── */
@@ -284,8 +284,8 @@ footer {
 <!-- ── TITLE ── -->
 
 <section id="title-section">
-  <h1>900,000,000 <span>gallons</span></h1>
-  <p>Loudoun County · data center water use · 2023 · scroll the bar · 1 pixel = 10 gallons</p>
+  <h1>Whose <span>Water</span> Is It? </h1>
+  <p>In 2023 Loundon County Virginia Used <span>900,000,000 gallons</span> of water, scroll to see what that looks like</p>
 </section>
 
 <!-- ── VISUALIZATION ── -->
@@ -1097,13 +1097,12 @@ window.addEventListener("scroll", updateFromScroll, { passive: true })
 window.addEventListener("resize", () => { buildMinimap(); positionSticky(); updateFromScroll() })
 
 buildMinimap()
+updateFromScroll()
 // Show first quote immediately on load
 qText.textContent   = QUOTES[0].text
 qSource.textContent = QUOTES[0].source
 qWrap.classList.add('visible')
 lastQuote = 0
-updateFromScroll()
-
 
 
 </script>
